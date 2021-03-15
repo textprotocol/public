@@ -1,2 +1,2 @@
-# public
-TEXT://PROTOCOL CLIENT
+# PUBLICTEXT
+[NC](https://en.wikipedia.org/wiki/Netcat "NETCAT") [TEXT://PROTOCOL](https://textprotocol.org "TEXT://PROTOCOL") CLIENT
