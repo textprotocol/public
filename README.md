@@ -41,3 +41,17 @@ text://txt.textprotocol.org/license.txt rel=license CC0-1.0
 ℹ 19T0ANB
 ```
 
+```bash
+#textsource text://txt.textprotocol.org/
+20 text/plain; charset=utf-8; content-length=262
+TEXT://PROTOCOL
+
+=> geo:37.429167,-122.138056 PALO ALTO, CA 94301, USA
+=> tag:txt.textprotocol.org,2021-03-07:~lablyd-dolben rel=me
+=> text://txt.textprotocol.org/icon.png rel=icon
+=> text://txt.textprotocol.org/license.txt rel=license CC0-1.0
+
+—
+🆃🆇🆃
+```
+
