@@ -42,7 +42,7 @@ text://txt.textprotocol.org/license.txt rel=license CC0-1.0
 ```
 
 ```bash
-#textsource text://txt.textprotocol.org/
+# textsource text://txt.textprotocol.org/
 20 text/plain; charset=utf-8; content-length=262
 TEXT://PROTOCOL
 
@@ -54,4 +54,16 @@ TEXT://PROTOCOL
 —
 🆃🆇🆃
 ```
+
+```bash
+# textlog text://txt.textprotocol.org/
+# '/usr/bin/locale' charmap 2>/dev/null
+# '/bin/test' -t 1 2>/dev/null
+# '/usr/bin/dig' +nocomments +nofail +ignore +short +retry=0 +notcp +time=1 +tries=1 $('/usr/local/bin/idn2' 'txt.textprotocol.org') A 2>/dev/null
+# '/usr/local/bin/timeout' 5 '/usr/bin/nc' -C -G 5 -w 5 '165.22.70.231' 1961 <<< 'text://txt.textprotocol.org/' 2>/dev/null
+# '/usr/bin/iconv' --from-code=UTF-8 --to-code=UTF-8 < '02.status.txt' >/dev/null
+# '/usr/bin/sed' 1d < '01.response.raw' 1>'03.content.txt' 2>/dev/null
+# '/usr/bin/file' --brief --mime-type --mime-encoding '03.content.txt' 2>/dev/null
+```
+
 
