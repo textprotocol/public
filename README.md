@@ -8,7 +8,7 @@
 --
 -- # textprint() { public "$1" 2>/dev/null; }
 -- # textsource() { public "$1" 2>/dev/null | tee; }
--- # textlog() { public "$1" 1>/dev/null ; }
+-- # textlog() { public "$1" 1>/dev/null; }
 --
 ```
 
