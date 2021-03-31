@@ -42,7 +42,7 @@ text://txt.textprotocol.org/license.txt rel=license CC0-1.0
 ```
 
 ```bash
-$ textprint text://txt.textprotocol.org/sigil.svg
+# textprint text://txt.textprotocol.org/sigil.svg
 ✂・・・・・・・・・・
 ℹ /DNS/TXT.TEXTPROTOCOL.ORG/TCP/1961
 ℹ /IP/165.22.70.231/TCP/1961
