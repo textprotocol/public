@@ -20,7 +20,7 @@
 ℹ ℅ DIGITALOCEAN, FRANKFURT AM MAIN, HESSE 60313, GERMANY
 ℹ ⧗ 15ms
 ✂・・・・・・・・・・
-ℹ ✖ NAMED ✖ SIGNED ✖ ENCRYPTED
+ℹ ✖ HOSTED ✖ SIGNED ✖ ENCRYPTED
 ✂・・・・・・・・・・
 ✔ TEXT/PLAIN — 9 lines, 20 words, 251 characters, 262 bytes
 ℹ UTF-8
