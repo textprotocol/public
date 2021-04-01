@@ -110,7 +110,7 @@ MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 ```
 
 ```bash
-$ textprint text://txt.textprotocol.org/
+# textprint text://txt.textprotocol.org/
 ✂・・・・・・・・・・
 ℹ /DNS/TXT.TEXTPROTOCOL.ORG/TCP/1961
 ℹ /IP/165.22.70.231/TCP/1961
