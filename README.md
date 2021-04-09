@@ -171,31 +171,31 @@ image/png — 234 bytes — ascii
 
 __DEPENDENCIES__
 
-`base64`[ℹ︎](https://linux.die.net/man/1/base64 "base64(1) - man page")\
-`clear`[ℹ︎](https://linux.die.net/man/1/clear "clear(1) - man page") _optional_\
-`convert`[ℹ︎](https://linux.die.net/man/1/convert "convert(1) - man page") _optional_\
-`date`[ℹ︎](https://linux.die.net/man/1/date "date(1) - man page") _optional_\
-`dig`[ℹ︎](https://linux.die.net/man/1/dig "dig(1) - man page") _optional_\
-`file`[ℹ︎](https://linux.die.net/man/1/file "file(1) - man page")\
-`fold`[ℹ︎](https://linux.die.net/man/1/fold "fold(1) - man page")\
-`franc`[ℹ︎](https://github.com/wooorm/franc "detect the language of text") _optional_\
-`gron`[ℹ︎](https://github.com/tomnomnom/gron "make json greppable") _optional_\
-`iconv`[ℹ︎](https://linux.die.net/man/1/iconv "iconv(1) - man page")\
-`idn2`[ℹ︎](https://linux.die.net/man/1/idn2 "idn2(1) - man page") _optional_\
-`jp2a`[ℹ︎](https://csl.name/jp2a/ "converts images to ascii") _optional_\
-`locale`[ℹ︎](https://linux.die.net/man/1/locale "locale(1) - man page")\
-__`lua`__[ℹ︎](https://linux.die.net/man/1/lua "lua(1) - man page")\
-`md5sum`[ℹ︎](https://linux.die.net/man/1/md5sum "md5sum(1) - man page") _optional_\
-`mktemp`[ℹ︎](https://linux.die.net/man/1/mktemp "mktemp(1) - man page")\
-`mmdbinspect`[ℹ︎](https://github.com/maxmind/mmdbinspect "maxmind geoip") _optional_\
-`nc`[ℹ︎](https://linux.die.net/man/1/nc "nc(1) - man page")\
-`pdftotext`[ℹ︎](https://linux.die.net/man/1/pdftotext "pdftotext(1) - man page") _optional_\
-`ping`[ℹ︎](https://linux.die.net/man/8/ping "ping(8) - man page") _optional_\
-`printf`[ℹ︎](https://linux.die.net/man/1/printf "printf(1) - man page")\
-`rm`[ℹ︎](https://linux.die.net/man/1/rm "rm(1) - man page")\
-`sed`[ℹ︎](https://linux.die.net/man/1/sed "sed(1) - man page")\
-`tail`[ℹ︎](https://linux.die.net/man/1/tail "tail(1) - man page") _optional_\
-`test`[ℹ︎](https://linux.die.net/man/1/test "test(1) - man page")\
-`timeout`[ℹ︎](https://linux.die.net/man/1/timeout "timeout(1) - man page")\
-`wc`[ℹ︎](https://linux.die.net/man/1/wc "wc(1) - man page")
+[ℹ︎](https://linux.die.net/man/1/base64 "base64(1) - man page")`base64`\
+[ℹ︎](https://linux.die.net/man/1/clear "clear(1) - man page")`clear` _optional_\
+[ℹ︎](https://linux.die.net/man/1/convert "convert(1) - man page")`convert` _optional_\
+[ℹ︎](https://linux.die.net/man/1/date "date(1) - man page")`date` _optional_\
+[ℹ︎](https://linux.die.net/man/1/dig "dig(1) - man page")`dig` _optional_\
+[ℹ︎](https://linux.die.net/man/1/file "file(1) - man page")`file`\
+[ℹ︎](https://linux.die.net/man/1/fold "fold(1) - man page")`fold`\
+[ℹ︎](https://github.com/wooorm/franc "detect the language of text")`franc` _optional_\
+[ℹ︎](https://github.com/tomnomnom/gron "make json greppable")`gron` _optional_\
+[ℹ︎](https://linux.die.net/man/1/iconv "iconv(1) - man page")`iconv`\
+[ℹ︎](https://linux.die.net/man/1/idn2 "idn2(1) - man page")`idn2` _optional_\
+[ℹ︎](https://csl.name/jp2a/ "converts images to ascii")`jp2a` _optional_\
+[ℹ︎](https://linux.die.net/man/1/locale "locale(1) - man page")`locale`\
+[ℹ︎](https://linux.die.net/man/1/lua "lua(1) - man page")__`lua`__\
+[ℹ︎](https://linux.die.net/man/1/md5sum "md5sum(1) - man page")`md5sum` _optional_\
+[ℹ︎](https://linux.die.net/man/1/mktemp "mktemp(1) - man page")`mktemp`\
+[ℹ︎](https://github.com/maxmind/mmdbinspect "maxmind geoip")`mmdbinspect` _optional_\
+[ℹ︎](https://linux.die.net/man/1/nc "nc(1) - man page")`nc`\
+[ℹ︎](https://linux.die.net/man/1/pdftotext "pdftotext(1) - man page")`pdftotext` _optional_\
+[ℹ︎](https://linux.die.net/man/8/ping "ping(8) - man page")`ping` _optional_\
+[ℹ︎](https://linux.die.net/man/1/printf "printf(1) - man page")`printf`\
+[ℹ︎](https://linux.die.net/man/1/rm "rm(1) - man page")`rm`\
+[ℹ︎](https://linux.die.net/man/1/sed "sed(1) - man page")`sed`\
+[ℹ︎](https://linux.die.net/man/1/tail "tail(1) - man page")`tail` _optional_\
+[ℹ︎](https://linux.die.net/man/1/test "test(1) - man page")`test`\
+[ℹ︎](https://linux.die.net/man/1/timeout "timeout(1) - man page")`timeout`\
+[ℹ︎](https://linux.die.net/man/1/wc "wc(1) - man page")`wc`
 
