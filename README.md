@@ -35,7 +35,7 @@ text://txt.textprotocol.org/license.txt rel=license CC0-1.0
 
 ✂・・・・・・・・・・
 ℹ 2021-04-08T08:52:57Z
-ℹ BFD1 A8E8 9740 F159
+ℹ 3DE5 488F 67AB F9CF
 ℹ 19T0ANB
 ```
 
@@ -122,7 +122,7 @@ MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 
 ✂・・・・・・・・・・
 ℹ 2021-04-08T08:54:13Z
-ℹ D58E A7E1 841D A368
+ℹ D562 D083 E7B9 6AEB
 ℹ 19T0ANB
 ```
 
@@ -165,7 +165,7 @@ image/png — 234 bytes — ascii
 
 ✂・・・・・・・・・・
 ℹ 2021-04-08T08:54:53Z
-ℹ 203D CC16 2461 321E
+ℹ F7B7 100E ABF4 0A2F
 ℹ 19T0ANB
 ```
 
