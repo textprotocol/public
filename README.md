@@ -178,7 +178,7 @@ __DEPENDENCIES__
 [ℹ︎](https://linux.die.net/man/1/dig "dig(1) - man page")`dig` _optional_\
 [ℹ︎](https://linux.die.net/man/1/file "file(1) - man page")`file`\
 [ℹ︎](https://linux.die.net/man/1/fold "fold(1) - man page")`fold`\
-[ℹ︎](https://github.com/wooorm/franc "detect the language of text")`franc` _optional_\
+[ℹ︎](https://github.com/wooorm/franc "language detection")`franc` _optional_\
 [ℹ︎](https://github.com/tomnomnom/gron "make json greppable")`gron` _optional_\
 [ℹ︎](https://linux.die.net/man/1/iconv "iconv(1) - man page")`iconv`\
 [ℹ︎](https://linux.die.net/man/1/idn2 "idn2(1) - man page")`idn2` _optional_\
