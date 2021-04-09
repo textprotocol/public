@@ -185,7 +185,7 @@ __DEPENDENCIES__
 `jp2a`[ℹ︎](https://csl.name/jp2a/ "converts images to ascii") _optional_\
 `locale`[ℹ︎](https://linux.die.net/man/1/locale "locale(1) - man page")\
 __`lua`__[ℹ︎](https://linux.die.net/man/1/lua "lua(1) - man page")\
-`md5sum`[ℹ︎](https://linux.die.net/man/1/md5sum "md5sum(1) - man page")\ _optional_\
+`md5sum`[ℹ︎](https://linux.die.net/man/1/md5sum "md5sum(1) - man page") _optional_\
 `mktemp`[ℹ︎](https://linux.die.net/man/1/mktemp "mktemp(1) - man page")\
 `mmdbinspect`[ℹ︎](https://github.com/maxmind/mmdbinspect "maxmind geoip") _optional_\
 `nc`[ℹ︎](https://linux.die.net/man/1/nc "nc(1) - man page")\
