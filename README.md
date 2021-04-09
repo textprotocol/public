@@ -18,9 +18,7 @@
 ℹ /DNS/TXT.TEXTPROTOCOL.ORG/TCP/1961
 ℹ /IP/165.22.70.231/TCP/1961
 ℹ ℅ DIGITALOCEAN, FRANKFURT AM MAIN, HESSE 60313, GERMANY
-ℹ ⧗ 15ms
-✂・・・・・・・・・・
-ℹ ✖ HOSTED ✖ SIGNED ✖ ENCRYPTED
+ℹ ⧗ 14ms
 ✂・・・・・・・・・・
 ✔ TEXT/PLAIN — 9 lines, 20 words, 251 characters, 262 bytes
 ℹ UTF-8
@@ -36,7 +34,7 @@ text://txt.textprotocol.org/license.txt rel=license CC0-1.0
 🆃🆇🆃
 
 ✂・・・・・・・・・・
-ℹ 2021-03-29T15:27:58Z
+ℹ 2021-04-08T08:52:57Z
 ℹ BFD1 A8E8 9740 F159
 ℹ 19T0ANB
 ```
@@ -60,10 +58,31 @@ TEXT://PROTOCOL
 # '/usr/bin/locale' charmap 2>/dev/null
 # '/bin/test' -t 1 2>/dev/null
 # '/usr/bin/dig' +nocomments +nofail +ignore +short +retry=0 +notcp +time=1 +tries=1 $('/usr/local/bin/idn2' 'txt.textprotocol.org') A 2>/dev/null
-# '/usr/local/bin/timeout' 5 '/usr/bin/nc' -C -G 5 -w 5 '165.22.70.231' 1961 <<< 'text://txt.textprotocol.org/' 2>/dev/null
-# '/usr/bin/iconv' --from-code=UTF-8 --to-code=UTF-8 < '02.status.txt' >/dev/null
-# '/usr/bin/sed' 1d < '01.response.raw' 1>'03.content.txt' 2>/dev/null
-# '/usr/bin/file' --brief --mime-type --mime-encoding '03.content.txt' 2>/dev/null
+# '/usr/local/bin/timeout' 5 '/usr/bin/printf' 'text://txt.textprotocol.org/\r\n' | '/usr/bin/nc' -w 5 '165.22.70.231' 1961 2>/dev/null
+# '/usr/bin/mktemp' -d -q 2>/dev/null
+# '/usr/bin/iconv' --from-code=UTF-8 --to-code=UTF-8 < '/var/folders/9d/fbylmb1j7bqc0sfjqptl8h240000gn/T/tmp.XNuhaREE/02.status.txt' >/dev/null
+# '/usr/bin/sed' 1d < '/var/folders/9d/fbylmb1j7bqc0sfjqptl8h240000gn/T/tmp.XNuhaREE/01.response.raw' 1>'/var/folders/9d/fbylmb1j7bqc0sfjqptl8h240000gn/T/tmp.XNuhaREE/03.content.txt' 2>/dev/null
+# '/usr/bin/file' --brief --mime-type --mime-encoding '/var/folders/9d/fbylmb1j7bqc0sfjqptl8h240000gn/T/tmp.XNuhaREE/03.content.txt' 2>/dev/null
+# '/bin/rm' -rf '/var/folders/9d/fbylmb1j7bqc0sfjqptl8h240000gn/T/tmp.XNuhaREE' 2>/dev/null
+txt.textprotocol.org - - [08/Apr/2021:10:53:46 +0200] "text://txt.textprotocol.org/" 20 262
+```
+
+```bash
+# textprint text://txt.textprotocol.org/elos.pdf
+✂・・・・・・・・・・
+ℹ /DNS/TXT.TEXTPROTOCOL.ORG/TCP/1961
+ℹ /IP/165.22.70.231/TCP/1961
+ℹ ℅ DIGITALOCEAN, FRANKFURT AM MAIN, HESSE 60313, GERMANY
+ℹ ⧗ 13ms
+✂・・・・・・・・・・
+✔ APPLICATION/PDF — 1,868 lines, 11,119 words, 80,088 characters, 157,962 bytes
+ℹ UTF-8 ENG
+
+                 William Strunk, Jr.
+          The Elements of Style
+
+…
+
 ```
 
 ```bash
@@ -72,9 +91,7 @@ TEXT://PROTOCOL
 ℹ /DNS/TXT.TEXTPROTOCOL.ORG/TCP/1961
 ℹ /IP/165.22.70.231/TCP/1961
 ℹ ℅ DIGITALOCEAN, FRANKFURT AM MAIN, HESSE 60313, GERMANY
-ℹ ⧗ 15ms
-✂・・・・・・・・・・
-ℹ ✖ HOSTED ✖ SIGNED ✖ ENCRYPTED
+ℹ ⧗ 14ms
 ✂・・・・・・・・・・
 ✔ IMAGE/PNG — 11,967 bytes
 ℹ ASCII
@@ -104,30 +121,23 @@ MMMMMMMMMMMMMMMMMM0cc:cMMW::ccxMMMMMMMMMMMMMMM
 MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 
 ✂・・・・・・・・・・
-ℹ 2021-03-31T11:11:11Z
+ℹ 2021-04-08T08:54:13Z
 ℹ D58E A7E1 841D A368
 ℹ 19T0ANB
 ```
 
 ```bash
-# textprint text://txt.textprotocol.org/
+# textprint text://txt.textprotocol.org/data.txt
 ✂・・・・・・・・・・
 ℹ /DNS/TXT.TEXTPROTOCOL.ORG/TCP/1961
 ℹ /IP/165.22.70.231/TCP/1961
 ℹ ℅ DIGITALOCEAN, FRANKFURT AM MAIN, HESSE 60313, GERMANY
-ℹ ⧗ 25ms
+ℹ ⧗ 14ms
 ✂・・・・・・・・・・
-ℹ ✖ HOSTED ✖ SIGNED ✖ ENCRYPTED
-✂・・・・・・・・・・
-✔ TEXT/PLAIN — 11 lines, 23 words, 599 characters, 610 bytes
+✔ TEXT/PLAIN — 6 lines, 9 words, 380 characters, 391 bytes
 ℹ UTF-8
 
-TEXT://PROTOCOL
-
-geo:37.429167,-122.138056 PALO ALTO, CA 94301, USA
-tag:txt.textprotocol.org,2021-03-07:~lablyd-dolben rel=me
-text://txt.textprotocol.org/icon.png rel=icon
-text://txt.textprotocol.org/license.txt rel=license CC0-1.0
+With embedded data: URI.
 
 rel=icon
 +--------------------------------+
@@ -154,8 +164,38 @@ image/png — 234 bytes — ascii
 🆃🆇🆃
 
 ✂・・・・・・・・・・
-ℹ 2021-04-01T19:41:48Z
-ℹ 6E9A 0353 60EB 933E
+ℹ 2021-04-08T08:54:53Z
+ℹ 203D CC16 2461 321E
 ℹ 19T0ANB
 ```
+
+__DEPENDENCIES__
+
+`base64`[ℹ︎](https://linux.die.net/man/1/base64 "base64(1) - man page")\
+`clear`[ℹ︎](https://linux.die.net/man/1/clear "clear(1) - man page") _optional_\
+`convert`[ℹ︎](https://linux.die.net/man/1/convert "convert(1) - man page") _optional_\
+`date`[ℹ︎](https://linux.die.net/man/1/date "date(1) - man page") _optional_\
+`dig`[ℹ︎](https://linux.die.net/man/1/dig "dig(1) - man page") _optional_\
+`file`[ℹ︎](https://linux.die.net/man/1/file "file(1) - man page")\
+`fold`[ℹ︎](https://linux.die.net/man/1/fold "fold(1) - man page")\
+`franc`[ℹ︎](https://github.com/wooorm/franc "detect the language of text") _optional_\
+`gron`[ℹ︎](https://github.com/tomnomnom/gron "make json greppable") _optional_\
+`iconv`[ℹ︎](https://linux.die.net/man/1/iconv "iconv(1) - man page")\
+`idn2`[ℹ︎](https://linux.die.net/man/1/idn2 "idn2(1) - man page") _optional_\
+`jp2a`[ℹ︎](https://csl.name/jp2a/ "converts images to ascii") _optional_\
+`locale`[ℹ︎](https://linux.die.net/man/1/locale "locale(1) - man page")\
+__`lua`__[ℹ︎](https://linux.die.net/man/1/lua "lua(1) - man page")\
+`md5sum`[ℹ︎](https://linux.die.net/man/1/md5sum "md5sum(1) - man page")\ _optional_\
+`mktemp`[ℹ︎](https://linux.die.net/man/1/mktemp "mktemp(1) - man page")\
+`mmdbinspect`[ℹ︎](https://github.com/maxmind/mmdbinspect "maxmind geoip") _optional_\
+`nc`[ℹ︎](https://linux.die.net/man/1/nc "nc(1) - man page")\
+`pdftotext`[ℹ︎](https://linux.die.net/man/1/pdftotext "pdftotext(1) - man page") _optional_\
+`ping`[ℹ︎](https://linux.die.net/man/8/ping "ping(8) - man page") _optional_\
+`printf`[ℹ︎](https://linux.die.net/man/1/printf "printf(1) - man page")\
+`rm`[ℹ︎](https://linux.die.net/man/1/rm "rm(1) - man page")\
+`sed`[ℹ︎](https://linux.die.net/man/1/sed "sed(1) - man page")\
+`tail`[ℹ︎](https://linux.die.net/man/1/tail "tail(1) - man page") _optional_\
+`test`[ℹ︎](https://linux.die.net/man/1/test "test(1) - man page")\
+`timeout`[ℹ︎](https://linux.die.net/man/1/timeout "timeout(1) - man page")\
+`wc`[ℹ︎](https://linux.die.net/man/1/wc "wc(1) - man page")
 

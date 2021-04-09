@@ -1,0 +1,960 @@
+#!/usr/bin/env lua
+
+--
+-- public
+-- netcat text://protocol client
+--
+-- # textprint() { public "$1" 2>/dev/null; }
+-- # textsource() { public "$1" 2>/dev/null | tee; }
+-- # textlog() { public "$1" 1>/dev/null ; }
+--
+
+local arg = arg
+local assert = assert
+local io = require( 'io' )
+local math = require( 'math' )
+local os = require( 'os' )
+local pcall = pcall
+local string = require( 'string' )
+local table = require( 'table' )
+local tonumber = tonumber
+local tostring = tostring
+
+_ENV = nil
+
+local _url = nil
+local _host = nil
+local _port = nil
+local _name = nil
+local _extension = nil
+local _size = 0
+local _status = nil
+local _address = nil
+
+local function URL()
+  if not _url then
+    _url = assert( arg[ 1 ] )
+
+    if '-' == _url then
+      _url = assert( io.stdin:read() )
+    end
+
+    _url = _url:match( '^(%C+)' )
+
+    assert( 0 ~= _url:len() )
+    assert( 1024 >= _url:len() )
+    assert( not _url:find( '%s' ) )
+    assert( _url == _url:lower() )
+    assert( 'text://' == _url:sub( 1, 7 ) )
+
+    _host = assert( _url:match( '^text://([%w.-]+)' ) )
+    _port = assert( tonumber( _url:match( ':([%d]+)/' ) ) or 1961 )
+
+    _name, _extension = _url:match( '/([%w-]+)%.(%w+)$' )
+
+    if '/' ==  _url:sub( -1, -1 ) then _name = 'index' _extension = 'txt' end
+
+    assert( _name )
+    assert( 0 ~= _name:len() )
+    assert( 128 >= _name:len() )
+    assert( _extension )
+    assert( 0 ~= _extension:len() )
+    assert( 3 >= _extension:len() )
+  end
+
+  return _url, _host, _port, _name, _extension, _size, _status
+end
+
+local function PRINT( aHandle, ... )
+  assert( aHandle:write( ... ) )
+  assert( aHandle:write( '\n' ) )
+end
+
+local function PRINTERR( ... )
+  PRINT( io.stderr, ... )
+end
+
+local function PRINTOUT( ... )
+  PRINT( io.stdout, ... )
+end
+
+local _controls = { [ '\r' ] = '\\r', [ '\n' ] = '\\n' }
+
+local function LOGCMD( aCommand )
+  PRINTERR( '# ', ( aCommand:gsub( '%c', _controls ) ) )
+end
+
+local function QUOTE( anArgument )
+  return ( "'%s'" ):format( tostring( anArgument or '' ):gsub( "'", "'\\''" ) )
+end
+
+local function CHECKWHICH( aProgram )
+  local aCommand =
+        ( 'which %s 2>/dev/null' ):format
+        (
+          QUOTE( aProgram )
+        )
+        --LOGCMD( aCommand )
+  local aHandle = io.popen( aCommand )
+  local aPath = aHandle:read()
+
+  aHandle:close()
+
+  if aPath then
+    return QUOTE( aPath )
+  end
+
+  return false
+end
+
+local _which = {}
+
+local function WHICH( aProgram )
+  if _which[ assert( aProgram ) ] == nil then _which[ aProgram ] = CHECKWHICH( aProgram ) end
+
+  return _which[ aProgram ]
+end
+
+local function LOCALE()
+  local aCommand =
+        ( '%s charmap 2>/dev/null' ):format
+        (
+          assert( WHICH( 'locale' ) )
+        )
+        LOGCMD( aCommand )
+  local aHandle = io.popen( aCommand, 'r' )
+  local aCharmap = assert( aHandle:read() )
+
+  assert( aHandle:close() )
+
+  assert( aCharmap )
+  assert( 0 ~= aCharmap:len() )
+  assert( 16 >= aCharmap:len() )
+  aCharmap = aCharmap:upper()
+
+  return aCharmap
+end
+
+local function CHECKTTY()
+  local aCommand =
+        ( '%s -t 1 2>/dev/null' ):format
+        (
+          assert( WHICH( 'test' ) )
+        )
+        LOGCMD( aCommand )
+  local ok, exit, signal = os.execute( aCommand )
+
+  return ( ok and exit == 'exit' ) and signal == 0 or false
+end
+
+local _istty = nil
+
+local function ISTTY()
+  if _istty == nil then _istty = CHECKTTY() end
+
+  return _istty
+end
+
+local function LOG( aMark, aDescription )
+  if not ISTTY() then return end
+
+  assert( aMark )
+  assert( aDescription )
+  aDescription = tostring( aDescription )
+  assert( aDescription )
+  assert( 0 ~= aDescription:len() )
+  assert( 144 >= aDescription:len() )
+  assert( not aDescription:find( '%c' ) )
+
+  PRINTOUT( aMark, ' ', aDescription )
+end
+
+local function INFO( aDescription )
+  LOG( '\u{2139}', aDescription )
+end
+
+local function WARNING( aDescription )
+  LOG( '\u{26A0}', aDescription )
+end
+
+local function ERROR( aDescription )
+  LOG( '\u{2716}', aDescription )
+end
+
+local function LINE()
+  if not ISTTY() then return end
+
+  PRINTOUT( '\u{2702}', ( '\u{30FB}' ):rep( 10 ) )
+end
+
+local function CLEAR()
+  if not ISTTY() then return end
+  if not WHICH( 'clear' ) then return end
+  local aCommand =
+        ( '%s 2>/dev/null' ):format
+        (
+          assert( WHICH( 'clear' ) )
+        )
+        LOGCMD( aCommand )
+        assert( os.execute( aCommand ) )
+end
+
+local function ADDRESS( aHost )
+  if not WHICH( 'dig' ) then return end
+  local aCommand =
+        ( '%s +nocomments +nofail +ignore +short +retry=0 +notcp +time=1 +tries=1 $(%s %s) A 2>/dev/null' ):format
+        (
+          assert( WHICH( 'dig' ) ),
+          assert( WHICH( 'idn2' ) or WHICH( 'printf' ) ),
+          QUOTE( aHost )
+        )
+        LOGCMD( aCommand )
+  local aHandle = io.popen( aCommand, 'r' )
+  local anAddress = aHandle:read()
+
+  aHandle:close()
+
+  if anAddress and ';;' == anAddress:sub( 1, 2 ) then anAddress = nil end
+
+  return anAddress
+end
+
+local function LOCATION( anAddress )
+  if not anAddress then return end
+  if not ISTTY() then return end
+  if not WHICH( 'mmdbinspect' ) then return end
+  if not WHICH( 'gron' ) then return end
+  local aCommand =
+        ( '%s -db %s -db %s -db %s %s 2>/dev/null | %s' ):format
+        (
+          assert( WHICH( 'mmdbinspect' ) ),
+          QUOTE( '/usr/local/var/GeoIP/GeoLite2-ASN.mmdb' ),
+          QUOTE( '/usr/local/var/GeoIP/GeoLite2-Country.mmdb' ),
+          QUOTE( '/usr/local/var/GeoIP/GeoLite2-City.mmdb' ),
+          QUOTE( anAddress ),
+          assert( WHICH( 'gron' ) )
+        )
+        LOGCMD( aCommand )
+  local aHandle = io.popen( aCommand, 'r' )
+  local anOrganization = nil
+  local aCity = nil
+  local aPostalCode = nil
+  local anArea = nil
+  local aCountry = nil
+  local aBuffer = {}
+
+  for aLine in aHandle:lines() do
+    anOrganization = anOrganization or aLine:match( 'autonomous_system_organization = "(.-)";$' )
+    aCity = aCity or aLine:match( 'city%.names%.en = "(.-)";$' )
+    aPostalCode = aPostalCode or aLine:match( 'postal.code = "(.-)";$' )
+    anArea = anArea or aLine:match( 'subdivisions%[0%]%.names%.en = "(.-)";$' )
+    aCountry = aCountry or aLine:match( 'country%.names%.en = "(.-)";$' )
+  end
+
+  aHandle:close()
+
+  if anArea and aPostalCode then anArea = ( '%s %s' ):format( anArea, aPostalCode ) end
+
+  if anOrganization then aBuffer[ #aBuffer + 1 ] = anOrganization:gsub( '%-ASN$', '' ) end
+  if aCity then aBuffer[ #aBuffer + 1 ] = aCity end
+  if anArea then aBuffer[ #aBuffer + 1 ] = anArea end
+  if aCountry then aBuffer[ #aBuffer + 1 ] = aCountry end
+
+  INFO( ( '\u{2105} %s' ):format( table.concat( aBuffer, ', ' ) ):upper() )
+end
+
+local function PING( aHost )
+  if not ISTTY() then return end
+  if not WHICH( 'ping' ) then return end
+  if not WHICH( 'tail' ) then return end
+  local aCommand =
+        ( '%s -c1 -q %s 2>/dev/null | %s -1' ):format
+        (
+          assert( WHICH( 'ping' ) ),
+          QUOTE( aHost ),
+          assert( WHICH( 'tail' ) )
+        )
+        LOGCMD( aCommand )
+  local aHandle = io.popen( aCommand, 'r' )
+  local aLine = aHandle:read() or ''
+        aHandle:close()
+  local aLatency = math.floor( tonumber( aLine:match( ' = (%d+.%d+)/' ) ) or 0 )
+  local aDescription = ( '\u{29D7} %ims' ):format( aLatency )
+
+  if 0 ~= aLatency then INFO( aDescription ) end
+end
+
+local function TMPDIR()
+  local aCommand =
+        (
+          '%s -d -q 2>/dev/null'
+        ):format
+        (
+          assert( WHICH( 'mktemp' ) )
+        )
+        LOGCMD( aCommand )
+  local aHandle = assert( io.popen( aCommand, 'r' ) )
+  local aDirectory = assert( aHandle:read() )
+        assert( aHandle:close() )
+
+  return assert( aDirectory )
+end
+
+local _directory = nil
+local _sequence = 0
+
+local function TMPNAME( aName, anExtension )
+  _directory = assert( _directory or TMPDIR() )
+  _sequence = _sequence + 1
+  assert( 99 > _sequence )
+
+  return ( '%s/%02i.%s.%s' ):format( _directory, _sequence, aName, anExtension )
+end
+
+local function CHUNK( aHandle )
+  return function() return aHandle:read( 4096 ) end
+end
+
+local function REQUEST()
+  local aURL, aHost, aPort = URL()
+        INFO( ( '/dns/%s/tcp/%i' ):format( aHost, aPort ):upper() )
+        _address = ADDRESS( aHost )
+        if _address then INFO( ( '/ip/%s/tcp/%i' ):format( _address, aPort ):upper() ) end
+        LOCATION( _address )
+        PING( _address or aHost )
+  local aCommand =
+        ( '%s 5 %s %s | %s -w 5 %s %i 2>/dev/null' ):format
+        (
+          assert( WHICH( 'timeout' ) ),
+          assert( WHICH( 'printf' ) ),
+          QUOTE( ( '%s\r\n' ):format( aURL ) ),
+          assert( WHICH( 'nc' ) ),
+          QUOTE( _address or aHost ),
+          aPort
+        )
+        LOGCMD( aCommand )
+  local aHandle = assert( io.popen( aCommand, 'r' ) )
+  local aName = TMPNAME( 'response', 'raw' )
+  local aFile = io.open( aName, 'wb' )
+  local aSize = 0
+
+  for aChunk in CHUNK( aHandle ) do
+    aSize = aSize + aChunk:len()
+    assert( aFile:write( aChunk ) )
+    assert( 1048576 > aSize )
+  end
+
+  assert( aHandle:close() )
+  assert( aFile:close() )
+
+  return aName
+end
+
+local BOLD = 1
+local DIM = 2
+local UNDERLINE = 4
+
+local function ANSI( aCode, aValue )
+  local aPattern = string.char( 27 ) .. '[%dm'
+
+  assert( aCode == 1 or aCode == 2 or aCode == 4 )
+  assert( aValue )
+
+ return ( '%s%s%s' ):format( aPattern:format( aCode ), aValue, aPattern:format( 0 ) )
+end
+
+local function NOANSI( aValue )
+  return
+  (
+    assert( aValue )
+    :gsub( '\x1b%[%d+;%d+;%d+;%d+;%d+m', '' )
+    :gsub( '\x1b%[%d+;%d+;%d+;%d+m', '' )
+    :gsub( '\x1b%[%d+;%d+;%d+m', '' )
+    :gsub( '\x1b%[%d+;%d+m', '' )
+    :gsub( '\x1b%[%d+m', '' )
+  )
+end
+
+local function STATUS( aResponseName )
+  local aResponseFile = assert( io.open( aResponseName, 'r' ) )
+  local aLine = assert( aResponseFile:read():match( '^(%C+)' ) )
+        assert( 0 ~= aLine:len() )
+        assert( 1024 >= aLine:len() )
+        assert( aLine == NOANSI( aLine ) )
+        assert( aResponseFile:close() )
+  local aStatus = assert( tonumber( aLine:match( '^(%d+) ' ) ) )
+  local aName = TMPNAME( 'status', 'txt' )
+  local aFile = assert( io.open( aName, 'w' ) )
+        assert( aFile:write( aLine, '\n' ) )
+        assert( aFile:close() )
+  local aCommand =
+        ( '%s --from-code=UTF-8 --to-code=UTF-8 < %s >/dev/null' ):format
+        (
+          assert( WHICH( 'iconv' ) ),
+          QUOTE( aName )
+        )
+        LOGCMD( aCommand )
+
+  assert( os.execute( aCommand ) )
+
+  return aName, aStatus
+end
+
+local DISPLAY20TEXTPLAIN = nil
+
+local function COMMA( amount )
+  local formatted, k = amount
+
+  while true do
+    formatted, k = string.gsub( formatted, '^(-?%d+)(%d%d%d)' , '%1,%2' )
+
+    if k == 0 then break end
+  end
+
+  return formatted
+end
+
+local function PLURAL( aCount, aSingular, aPlural )
+  if 0 == aCount then return aSingular end
+  if 1 == aCount then return aSingular end
+
+  return aPlural or ( '%ss' ):format( aSingular )
+end
+
+local function DISPLAY20BINARY( aContentName, aType, aCharset )
+  if not ISTTY() then return false end
+  local aCommand =
+        ( '%s < %s | %s -b -w64 2>/dev/null' ):format
+        (
+          assert( WHICH( 'base64' ) ),
+          QUOTE( aContentName ),
+          assert( WHICH( 'fold' ) )
+        )
+        LOGCMD( aCommand )
+  local aHandle = assert( io.popen( aCommand, 'r' ) )
+
+  PRINTOUT
+  (
+    ANSI( BOLD, '\u{2714} ' ),
+    ANSI( BOLD, aType:upper() ),
+    ANSI( DIM, ( ' \u{2014} %s %s ' ):format( COMMA( _size ), PLURAL( _size, 'byte' ) ) )
+  )
+  INFO( 'BASE64' )
+
+  PRINTOUT()
+  for aChunk in CHUNK( aHandle ) do
+    io.stdout:write( aChunk )
+  end
+  PRINTOUT()
+
+  assert( aHandle:close() )
+
+  return true
+end
+
+local function HANDLE20BINARY( aContentName, aType, aCharset )
+  if DISPLAY20BINARY( aContentName, aType, aCharset ) then return true end
+  local aContentFile = assert( io.open( aContentName, 'rb' ) )
+
+  PRINTOUT( ( '20 %s; charset=%s; content-length=%i' ):format( aType, aCharset, _size ) )
+
+  for aChunk in CHUNK( aContentFile ) do
+    assert( io.stdout:write( aChunk ) )
+  end
+
+  assert( aContentFile:close() )
+
+  return true
+end
+
+local function DISPLAY20APPLICATIONPDF( aContentName, aType, aCharset )
+  if not ISTTY() then return false end
+  if not WHICH( 'pdftotext' ) then return false end
+  local aTextName = TMPNAME( 'pdf', 'txt' )
+  local aCommand =
+        ( '%s -enc UTF-8 -eol unix -layout -nopgbrk -q - - <%s 1>%s 2>/dev/null' ):format
+        (
+          assert( WHICH( 'pdftotext' ) ),
+          QUOTE( aContentName ),
+          QUOTE( aTextName )
+        )
+        LOGCMD( aCommand )
+        assert( os.execute( aCommand ) )
+
+  return DISPLAY20TEXTPLAIN( aTextName, aType, 'UTF-8' )
+end
+
+local function HANDLE20APPLICATIONPDF( aContentName, aType, aCharset )
+  if DISPLAY20APPLICATIONPDF( aContentName, aType, aCharset ) then return true end
+
+  return HANDLE20BINARY( aContentName, aType, aCharset )
+end
+
+local function DISPLAY20IMAGE( aContentName, aType, aCharset )
+  if not ISTTY() then return false end
+  if not WHICH( 'convert' ) then return false end
+  if not WHICH( 'jp2a' ) then return false end
+  local aCommand =
+        ( '%s %s jpg:- 2>/dev/null | jp2a - 2>/dev/null' ):format
+        (
+          assert( WHICH( 'convert' ) ),
+          QUOTE( aContentName ),
+          assert( WHICH( 'jp2a' ) )
+        )
+        LOGCMD( aCommand )
+  local aHandle = assert( io.popen( aCommand, 'r' ) )
+
+  PRINTOUT
+  (
+    ANSI( BOLD, '\u{2714} ' ),
+    ANSI( BOLD, aType:upper() ),
+    ANSI( DIM, ( ' \u{2014} %s %s ' ):format( COMMA( _size ), PLURAL( _size, 'byte' ) ) )
+  )
+  INFO( 'ASCII' )
+  PRINTOUT()
+
+  for aLine in aHandle:lines() do
+    PRINTOUT( NOANSI( aLine ) )
+  end
+
+  assert( aHandle:close() )
+
+  PRINTOUT()
+
+  return true
+end
+
+local function HANDLE20IMAGE( aContentName, aType, aCharset )
+  if DISPLAY20IMAGE( aContentName, aType, aCharset ) then return true end
+
+  return HANDLE20BINARY( aContentName, aType, aCharset )
+end
+
+local function LANGUAGE( aFileName )
+  if not WHICH( 'franc' ) then return nil end
+  local aCommand =
+        ( '%s --min-length 1024 < %s 2>/dev/null' ):format
+        (
+          assert( WHICH( 'franc' ) ),
+          QUOTE( aFileName )
+        )
+        LOGCMD( aCommand )
+  local aHandle = assert( io.popen( aCommand, 'r' ) )
+  local aLanguage = assert( aHandle:read() )
+        assert( aHandle:close() )
+
+  if aLanguage and 'und' == aLanguage then aLanguage = nil end
+
+  return aLanguage
+end
+
+local function DISPLAYIMAGEDATALINK( aScheme, aLink, aDescription )
+  if 'data:image/png;base64,' ~= aLink:sub( 1, 22 ) then return false end
+  if not WHICH( 'base64' ) then return false end
+  if not WHICH( 'convert' ) then return false end
+  if not WHICH( 'jp2a' ) then return false end
+  local aType = assert( aLink:match( '^data:(%w+/[%w.+-]+);' ) )
+  local aSubType = assert( aLink:match( '^data%:image%/([%w.+-]+)%;base64%,' ) )
+  local someData = assert( aLink:sub( 23 ) )
+  local aDataName = TMPNAME( 'data', aSubType )
+  local aCommand =
+        ( '%s %s | %s --decode 2>/dev/null 1>%s' ):format
+        (
+          WHICH( 'printf' ),
+          QUOTE( someData ),
+          WHICH( 'base64' ),
+          QUOTE( aDataName )
+        )
+        LOGCMD( aCommand )
+        assert( os.execute( aCommand ) )
+  local aDataFile = assert( io.open( aDataName, 'rb' ) )
+  local aSize = assert( aDataFile:seek( 'end' ) )
+        assert( aDataFile:close() )
+  local aCommand =
+        ( '%s %s jpg:- 2>/dev/null | jp2a --border --width=32 - 2>/dev/null' ):format
+        (
+          assert( WHICH( 'convert' ) ),
+          QUOTE( aDataName ),
+          assert( WHICH( 'jp2a' ) )
+        )
+        LOGCMD( aCommand )
+  local aHandle = assert( io.popen( aCommand, 'r' ) )
+
+  PRINTOUT( aDescription )
+
+  for aLine in aHandle:lines() do
+    PRINTOUT( NOANSI( aLine ) )
+  end
+
+  assert( aHandle:close() )
+
+  PRINTOUT
+  (
+    ANSI
+    (
+      DIM,
+      ( '%s \u{2014} %s %s \u{2014} ascii' ):format
+      (
+        aType:lower(),
+        COMMA( aSize ),
+        PLURAL( aSize, 'byte' )
+      )
+    )
+  )
+
+  return true
+end
+
+local _datalinkhandles = { image = DISPLAYIMAGEDATALINK }
+
+local function DISPLAYDATALINK( aScheme, aLink, aDescription )
+  local aType = assert( aLink:match( '^data:(%w+/[%w.+-]+);' ) )
+  local aMainType = aType:match( '^(%w+)/' )
+  local aHandler = _datalinkhandles[ aType ] or _datalinkhandles[ aMainType ]
+
+  if aHandler and aHandler( aScheme, aLink, aDescription ) then return true end
+
+  PRINTOUT
+  (
+    ( '%s %s' ):format
+    (
+      ANSI( UNDERLINE, ( '%s:%s' ):format( aScheme, aType ) ),
+      aDescription
+    )
+  )
+
+  return true
+end
+
+local _linkhandlers = { data = DISPLAYDATALINK }
+
+local function DISPLAYLINK( aLine )
+  if '=> ' ~= aLine:sub( 1, 3 ) then return false end
+  local aLine = aLine:sub( 4 )
+  local aLink = aLine:match( '^(%S+)' )
+  local aDescription = aLine:sub( aLink:len() + 2 )
+  local aScheme = aLink:match( '^([%w.+-]+):' )
+  local aHandler = _linkhandlers[ aScheme ]
+
+  if aHandler and aHandler( aScheme, aLink, aDescription ) then return true end
+
+  PRINTOUT( ( '%s %s' ):format( ANSI( UNDERLINE, aLink ), aDescription ) )
+
+  return true
+end
+
+local function DISPLAYLINE( aLine )
+  aLine = NOANSI( aLine )
+
+  if not DISPLAYLINK( aLine ) then PRINTOUT( aLine ) end
+end
+
+DISPLAY20TEXTPLAIN = function( aContentName, aType, aCharset )
+  if not ISTTY() then return false end
+  local aFileName = TMPNAME( 'content.utf', 'txt' )
+  local aCommand =
+        ( '%s --from-code=%s --to-code=UTF-8 < %s 1> %s 2>/dev/null' ):format
+        (
+          assert( WHICH( 'iconv' ) ),
+          QUOTE( aCharset ),
+          QUOTE( aContentName ),
+          QUOTE( aFileName )
+        )
+        LOGCMD( aCommand )
+        assert( os.execute( aCommand ) )
+  local aCommand =
+        ( '%s -l -w -m < %s 2>/dev/null' ):format
+        (
+          assert( WHICH( 'wc' ) ),
+          QUOTE( aFileName )
+        )
+        LOGCMD( aCommand )
+  local aHandle = assert( io.popen( aCommand, 'r' ) )
+  local aDescription = assert( aHandle:read() )
+        assert( aHandle:close() )
+  local someLines, someWords, someChars = aDescription:match( '^%s-(%d+)%s-(%d+)%s-(%d+)%s-$' )
+        someLines = tonumber( someLines )
+        someWords = tonumber( someWords )
+        someChars = tonumber( someChars )
+  local someBytes = ''
+        if _size ~= someChars then someBytes = ( ', %s %s ' ):format( COMMA( _size ), PLURAL( _size, 'byte' ) ) end
+  local aLabel =
+        ( ' \u{2014} %s %s, %s %s, %s %s%s' ):format
+        (
+          COMMA( someLines ),
+          PLURAL( someLines, 'line' ),
+          COMMA( someWords ),
+          PLURAL( someLines, 'word' ),
+          COMMA( someChars ),
+          PLURAL( someLines, 'character' ),
+          someBytes
+        )
+        PRINTOUT( ANSI( BOLD, '\u{2714} ' ), ANSI( BOLD, aType:upper() ), ANSI( DIM, aLabel ) )
+  local aLanguage = ( LANGUAGE( aFileName ) or '' ):upper()
+
+  INFO( ( 'UTF-8 %s' ):format( aLanguage ) )
+
+  PRINTOUT()
+  for aLine in assert( io.open( aFileName, 'r' ) ):lines() do
+    DISPLAYLINE( aLine )
+  end
+  PRINTOUT()
+
+  return true
+end
+
+local function HANDLE20TEXTPLAIN( aContentName, aType, aCharset )
+  if DISPLAY20TEXTPLAIN( aContentName, aType, aCharset ) then return true end
+  local aContentFile = assert( io.open( aContentName, 'rb' ) )
+
+  PRINTOUT( ( '20 %s; charset=%s; content-length=%i' ):format( aType, aCharset, _size ) )
+
+  for aChunk in CHUNK( aContentFile ) do
+    assert( io.stdout:write( aChunk ) )
+  end
+
+  assert( aContentFile:close() )
+
+  return true
+end
+
+local _handlers20 =
+      {
+        [ 'application/pdf' ] = HANDLE20APPLICATIONPDF,
+        [ 'image' ] = HANDLE20IMAGE,
+        [ 'text/plain' ] = HANDLE20TEXTPLAIN
+      }
+
+local function HANDLE20( aResponseName, aStatusName )
+  local aFile = assert( io.open( aStatusName, 'r' ) )
+  local aLine = assert( aFile:read() )
+        assert( aLine )
+        assert( aFile:close() )
+  local aResponseType = assert( aLine:match( '^20 (.+)$' ) )
+        assert( aResponseType )
+        assert( 0 ~= aResponseType:len() )
+        assert( 1024 >= aResponseType:len() )
+        assert( aResponseType == aResponseType:lower() )
+  local _, _, _, _, anExtension = URL()
+  local aContentName = TMPNAME( 'content', anExtension )
+  local aCommand =
+        ( '%s 1d < %s 1>%s 2>/dev/null' ):format
+        (
+          assert( WHICH( 'sed' ) ),
+          QUOTE( aResponseName ),
+          QUOTE( aContentName )
+        )
+        LOGCMD( aCommand )
+        assert( os.execute( aCommand ) )
+  local aContentFile = assert( io.open( aContentName, 'rb' ) )
+        _size = assert( aContentFile:seek( 'end' ) )
+        assert( aContentFile:seek( 'set' ) )
+        assert( aContentFile:close() )
+  local aCommand =
+        ( '%s --brief --mime-type --mime-encoding %s 2>/dev/null' ):format
+        (
+          assert( WHICH( 'file' ) ),
+          QUOTE( aContentName )
+        )
+        LOGCMD( aCommand )
+  local aHandle = assert( io.popen( aCommand, 'r' ) )
+  local aContentType = assert( aHandle:read() )
+        assert( aContentType )
+        assert( 0 ~= aContentType:len() )
+        assert( 1024 >= aContentType:len() )
+        assert( aHandle:close() )
+  local aType = aContentType:match( '^(%w+/[%w.+-]+); ' )
+        assert( aType )
+        assert( 0 ~= aType:len() )
+        assert( 32 >= aType:len() )
+  local aMainType = aType:match( '^(%w+)/' )
+        assert( aMainType )
+        assert( 0 ~= aMainType:len() )
+        assert( 16 >= aMainType:len() )
+  local aCharset = aContentType:match( 'charset=([%w-]+)' )
+        assert( aCharset )
+        assert( 0 ~= aCharset:len() )
+        assert( 16 >= aCharset:len() )
+  local aHandler = _handlers20[ aType ] or _handlers20[ aMainType ] or HANDLE20BINARY
+
+  if not aResponseType:find( aContentType, 1, true ) then WARNING( 'INCONSISTENT CONTENT' ) assert( false ) end
+  if not pcall( aHandler, aContentName, aType, aCharset ) then HANDLE20BINARY( aContentName, aType, aCharset ) end
+
+  return aContentName
+end
+
+local function DISPLAY30( aLink )
+  if not ISTTY() then return end
+
+  PRINTOUT( ANSI( BOLD, '\u{27A1} REDIRECT' ) )
+  PRINTOUT()
+  DISPLAYLINE( ( '=> %s' ):format( aLink ) )
+  PRINTOUT()
+end
+
+local function HANDLE30( aResponseName, aStatusName )
+  local aFile = assert( io.open( aStatusName, 'r' ) )
+  local aLine = assert( aFile:read() )
+        assert( aLine )
+        assert( aFile:close() )
+  local aLink = assert( aLine:match( '^30 (.+)$' ) )
+        assert( 0 ~= aLink:len() )
+        assert( 1024 >= aLink:len() )
+        assert( not aLink:find( '%s' ) )
+        assert( aLink == aLink:lower() )
+
+  DISPLAY30( aLink )
+  if ISTTY() then return end
+
+  PRINTOUT( aLine )
+end
+
+local function DISPLAY40( aDescription )
+  if not ISTTY() then return end
+
+  PRINTOUT( ANSI( BOLD, '\u{2716} ERROR' ) )
+  PRINTOUT()
+  PRINTOUT( aDescription )
+  PRINTOUT()
+end
+
+local function HANDLE40( aResponseName, aStatusName )
+  local aFile = assert( io.open( aStatusName, 'r' ) )
+  local aLine = assert( aFile:read() )
+        assert( aLine )
+        assert( aFile:close() )
+  local aDescription = assert( aLine:match( '^40 (.+)$' ) )
+        assert( aDescription )
+        assert( 0 ~= aDescription:len() )
+        assert( 1024 >= aDescription:len() )
+
+  DISPLAY40( aDescription )
+  if ISTTY() then return end
+
+  PRINTOUT( aLine )
+end
+
+local function TIMESTAMP()
+  if not ISTTY() then return end
+  if not WHICH( 'date' ) then return end
+  local aCommand =
+        ( "%s -u +'%%Y-%%m-%%dT%%H:%%M:%%SZ' 2>/dev/null" ):format
+        (
+          assert( WHICH( 'date' ) )
+        )
+        LOGCMD( aCommand )
+  local aHandle = assert( io.popen( aCommand, 'r' ) )
+  local aTimestamp = assert( aHandle:read() )
+        assert( aHandle:close() )
+
+  if aTimestamp then INFO( aTimestamp ) end
+end
+
+local function FINGERPRINT( aContentName )
+  if not ISTTY() then return end
+  if not aContentName or not WHICH( 'md5sum' ) then return end
+  local aCommand =
+        ( '%s --binary < %s 2>/dev/null' ):format
+        (
+          assert( WHICH( 'md5sum' ) ),
+          QUOTE( aContentName )
+        )
+        LOGCMD( aCommand )
+  local aHandle = assert( io.popen( aCommand, 'r' ) )
+  local aBuffer = { assert( aHandle:read() ):sub( 1, 16 ):upper():match( '^(%x%x%x%x)(%x%x%x%x)(%x%x%x%x)(%x%x%x%x)' ) }
+        assert( aHandle:close() )
+
+  if #aBuffer == 4 then INFO( table.concat( aBuffer, ' ' ) ) end
+end
+
+local base =
+      {
+        '0', '1', '2', '3', '4', '5', '6', '7', '8',
+        '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
+        'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q',
+        'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'
+      }
+
+local function tobase( aNumber, aBase )
+  assert( aNumber, 'bad argument #1 to \'tobase\' (nil number)' )
+  assert( aBase and aBase >= 2 and aBase <= #base, 'bad argument #2 to \'tobase\' (base out of range)' )
+
+  local abs = math.abs
+  local floor = math.floor
+  local aNumber = floor( abs( tonumber( aNumber ) ) )
+  local aBuffer = {}
+
+  repeat
+    aBuffer[ #aBuffer + 1 ] = base[ ( aNumber % aBase ) + 1 ]
+    aNumber = floor( aNumber / aBase )
+  until aNumber == 0
+
+  return table.concat( aBuffer ):reverse()
+end
+
+local function TAG( anAddress )
+  if not ISTTY() then return end
+  if not anAddress then return end
+  local ip2dec = function(ip) local i, dec=3,0; for d in ip:gmatch('%d+') do dec = dec+2^(8*i)*d; i=i-1 end; return dec end
+
+  INFO( tobase( ip2dec( anAddress ), 36 ) )
+end
+
+local function COMMONLOG()
+  local aBuffer = {}
+
+  aBuffer[ #aBuffer + 1 ] = _host or _address or '-' -- remotehost
+  aBuffer[ #aBuffer + 1 ] = '-' -- rfc931
+  aBuffer[ #aBuffer + 1 ] = '-' -- authuser
+  aBuffer[ #aBuffer + 1 ] = ( '[%s]' ):format( os.date( '%d/%b/%Y:%H:%M:%S %z' ) ) -- [date]
+  aBuffer[ #aBuffer + 1 ] = ( '%q' ):format( _url or '' ) -- "request"
+  aBuffer[ #aBuffer + 1 ] = tostring( _status or '-' ) -- status
+  aBuffer[ #aBuffer + 1 ] = tostring( _size or '0' ) -- bytes
+
+  PRINTERR( table.concat( aBuffer, ' ' ) )
+end
+
+local function CLEANUP()
+  if not _directory then return end
+  assert( '.' ~= _directory )
+  assert( '..' ~= _directory )
+  assert( '~' ~= _directory )
+  assert( '/' ~= _directory )
+  local aCommand =
+        ( '%s -rf %s 2>/dev/null' ):format
+        (
+          assert( WHICH( 'rm' ) ),
+          QUOTE( _directory )
+        )
+        LOGCMD( aCommand )
+        assert( os.execute( aCommand ) )
+end
+
+local _handlers = { [ 20 ] = HANDLE20, [ 30 ] = HANDLE30, [ 40 ] = HANDLE40 }
+
+local function PROCESS()
+        assert( 'UTF-8' == LOCALE() )
+        CLEAR()
+        LINE()
+  local aResponseName = REQUEST()
+  local aStatusName, aStatus = STATUS( aResponseName )
+        _status = aStatus
+  local aHandler = assert( _handlers[ aStatus ] )
+        LINE()
+  local aContentName = aHandler( aResponseName, aStatusName )
+        LINE()
+
+  TIMESTAMP()
+  FINGERPRINT( aContentName )
+  TAG( _address )
+  CLEANUP()
+  COMMONLOG()
+end
+
+if pcall( PROCESS ) then
+  os.exit( true )
+end
+
+ERROR( 'FAILED' )
+LINE()
+os.exit( false )
