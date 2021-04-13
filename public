@@ -405,11 +405,9 @@ local DISPLAY20TEXTPLAIN = nil
 local function COMMA( amount )
   local formatted, k = amount
 
-  while true do
+  repeat
     formatted, k = string.gsub( formatted, '^(-?%d+)(%d%d%d)' , '%1,%2' )
-
-    if k == 0 then break end
-  end
+  until k == 0
 
   return formatted
 end
@@ -933,7 +931,7 @@ end
 local _handlers = { [ 20 ] = HANDLE20, [ 30 ] = HANDLE30, [ 40 ] = HANDLE40 }
 
 local function PROCESS()
-        assert( 'UTF-8' == LOCALE() )
+        if ISTTY() then assert( 'UTF-8' == LOCALE() ) end
         CLEAR()
         LINE()
   local aResponseName = REQUEST()
