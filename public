@@ -776,7 +776,7 @@ local function HANDLE20( aResponseName, aStatusName )
   local aHandler = _handlers20[ aType ] or _handlers20[ aMainType ] or HANDLE20BINARY
 
   if not aResponseType:find( aContentType, 1, true ) then WARNING( 'INCONSISTENT CONTENT' ) assert( false ) end
-  if not pcall( aHandler, aContentName, aType, aCharset ) then HANDLE20BINARY( aContentName, aType, aCharset ) end
+  aHandler( aContentName, aType, aCharset )
 
   return aContentName
 end
