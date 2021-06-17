@@ -904,7 +904,7 @@ local function COMMONLOG()
   aBuffer[ #aBuffer + 1 ] = _host or _address or '-' -- remotehost
   aBuffer[ #aBuffer + 1 ] = '-' -- rfc931
   aBuffer[ #aBuffer + 1 ] = '-' -- authuser
-  aBuffer[ #aBuffer + 1 ] = ( '[%s]' ):format( os.date( '%d/%b/%Y:%H:%M:%S %z' ) ) -- [date]
+  aBuffer[ #aBuffer + 1 ] = ( '[%s]' ):format( os.date( '!%Y-%m-%dT%TZ' ) ) -- [date]
   aBuffer[ #aBuffer + 1 ] = ( '%q' ):format( _url or '' ) -- "request"
   aBuffer[ #aBuffer + 1 ] = tostring( _status or '-' ) -- status
   aBuffer[ #aBuffer + 1 ] = tostring( _size or '0' ) -- bytes
@@ -919,7 +919,7 @@ local function CLEANUP()
   assert( '~' ~= _directory )
   assert( '/' ~= _directory )
   local aCommand =
-        ( '%s -rf %s 2>/dev/null' ):format
+        ( '%s -r %s 2>/dev/null' ):format
         (
           assert( WHICH( 'rm' ) ),
           QUOTE( _directory )
@@ -949,9 +949,7 @@ local function PROCESS()
   COMMONLOG()
 end
 
-if pcall( PROCESS ) then
-  os.exit( true )
-end
+if pcall( PROCESS ) then os.exit( true ) end
 
 ERROR( 'FAILED' )
 LINE()
