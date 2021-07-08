@@ -186,6 +186,7 @@ __DEPENDENCIES__
 [ℹ︎](https://linux.die.net/man/1/locale "locale(1) - man page")`locale`\
 [ℹ︎](https://linux.die.net/man/1/lua "lua(1) - man page")__`lua`__\
 [ℹ︎](https://linux.die.net/man/1/md5sum "md5sum(1) - man page")`md5sum` _optional_\
+[ℹ︎](https://linux.die.net/man/1/mkfifo "mkfifo(1) - man page")`mkfifo`\
 [ℹ︎](https://linux.die.net/man/1/mktemp "mktemp(1) - man page")`mktemp`\
 [ℹ︎](https://github.com/maxmind/mmdbinspect "maxmind geoip")`mmdbinspect` _optional_\
 [ℹ︎](https://linux.die.net/man/1/nc "nc(1) - man page")`nc`\
