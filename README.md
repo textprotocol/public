@@ -192,7 +192,6 @@ __DEPENDENCIES__
 [ℹ︎](https://linux.die.net/man/1/nc "nc(1) - man page")`nc`\
 [ℹ︎](https://linux.die.net/man/1/pdftotext "pdftotext(1) - man page")`pdftotext` _optional_\
 [ℹ︎](https://linux.die.net/man/8/ping "ping(8) - man page")`ping` _optional_\
-[ℹ︎](https://linux.die.net/man/1/printf "printf(1) - man page")`printf`\
 [ℹ︎](https://linux.die.net/man/1/rm "rm(1) - man page")`rm`\
 [ℹ︎](https://linux.die.net/man/1/sed "sed(1) - man page")`sed`\
 [ℹ︎](https://linux.die.net/man/1/tail "tail(1) - man page")`tail` _optional_\
