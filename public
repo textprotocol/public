@@ -311,6 +311,19 @@ local function TMPNAME( aName, anExtension )
   return ( '%s/%02i.%s.%s' ):format( _directory, _sequence, aName, anExtension )
 end
 
+local function MKFIFO( aPath )
+  local aCommand = ( '%s %s 2>/dev/null' ):format
+        (
+          WHICH( 'mkfifo' ),
+          QUOTE( aPath )
+        )
+        LOGCMD( aCommand )
+
+  assert( os.execute( aCommand ) )
+
+  return aPath
+end
+
 local function CHUNK( aHandle )
   return function() return aHandle:read( 4096 ) end
 end
@@ -322,30 +335,34 @@ local function REQUEST()
         if _address then INFO( ( '/ip/%s/tcp/%i' ):format( _address, aPort ):upper() ) end
         LOCATION( _address )
         PING( _address or aHost )
+  local aResultName = MKFIFO( TMPNAME( 'result', 'fifo' ) )
   local aCommand =
-        ( '%s 5 %s %s | %s -w 5 %s %i 2>/dev/null' ):format
+        ( '%s 5 %s -w 5 %s %i 1>%s 2>/dev/null' ):format
         (
           assert( WHICH( 'timeout' ) ),
-          assert( WHICH( 'printf' ) ),
-          QUOTE( ( '%s\r\n' ):format( aURL ) ),
           assert( WHICH( 'nc' ) ),
           QUOTE( _address or aHost ),
-          aPort
+          aPort,
+          QUOTE( aResultName )
         )
         LOGCMD( aCommand )
-  local aHandle = assert( io.popen( aCommand, 'r' ) )
+  local aHandle = assert( io.popen( aCommand, 'w' ) )
+        assert( aHandle:write( aURL, '\r\n' ) )
+        assert( aHandle:flush() )
+  local aResultHandle = assert( io.open( aResultName, 'r' ) )
   local aName = TMPNAME( 'response', 'raw' )
   local aFile = io.open( aName, 'wb' )
   local aSize = 0
 
-  for aChunk in CHUNK( aHandle ) do
+  for aChunk in CHUNK( aResultHandle ) do
     aSize = aSize + aChunk:len()
     assert( aFile:write( aChunk ) )
     assert( 1048576 > aSize )
   end
 
-  assert( aHandle:close() )
   assert( aFile:close() )
+  assert( aResultHandle:close() )
+  assert( aHandle:close() )
 
   return aName
 end
