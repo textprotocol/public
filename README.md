@@ -58,12 +58,12 @@ TEXT://PROTOCOL
 # '/bin/test' -t 1 2>/dev/null
 # '/usr/bin/dig' +nocomments +nofail +ignore +short +retry=0 +notcp +time=1 +tries=1 $('/usr/local/bin/idn2' '_text._tcp.txt.textprotocol.org') TXT 2>/dev/null
 # '/usr/bin/mktemp' -d -q 2>/dev/null
-# '/usr/bin/mkfifo' '/var/folders/9d/fbylmb1j7bqc0sfjqptl8h240000gn/T/tmp.nfReqHV7/01.result.fifo' 2>/dev/null
-# '/usr/local/bin/timeout' 0.5 '/usr/local/bin/noisecat' -v -proto Noise_XX_25519_ChaChaPoly_BLAKE2b '64.225.108.16' 1968 1>'/var/folders/9d/fbylmb1j7bqc0sfjqptl8h240000gn/T/tmp.nfReqHV7/01.result.fifo' 2>/dev/null
-# '/usr/bin/iconv' --from-code=UTF-8 --to-code=UTF-8 < '/var/folders/9d/fbylmb1j7bqc0sfjqptl8h240000gn/T/tmp.nfReqHV7/03.status.txt' >/dev/null
-# '/usr/bin/sed' 1d < '/var/folders/9d/fbylmb1j7bqc0sfjqptl8h240000gn/T/tmp.nfReqHV7/02.response.raw' 1>'/var/folders/9d/fbylmb1j7bqc0sfjqptl8h240000gn/T/tmp.nfReqHV7/04.content.txt' 2>/dev/null
-# '/usr/bin/file' --brief --mime-type --mime-encoding '/var/folders/9d/fbylmb1j7bqc0sfjqptl8h240000gn/T/tmp.nfReqHV7/04.content.txt' 2>/dev/null
-# '/bin/rm' -r '/var/folders/9d/fbylmb1j7bqc0sfjqptl8h240000gn/T/tmp.nfReqHV7' 2>/dev/null
+# '/usr/bin/mkfifo' 'tmp.nfReqHV7/01.result.fifo' 2>/dev/null
+# '/usr/local/bin/timeout' 0.5 '/usr/local/bin/noisecat' -v -proto Noise_XX_25519_ChaChaPoly_BLAKE2b '64.225.108.16' 1968 1>'tmp.nfReqHV7/01.result.fifo' 2>/dev/null
+# '/usr/bin/iconv' --from-code=UTF-8 --to-code=UTF-8 < 'tmp.nfReqHV7/03.status.txt' >/dev/null
+# '/usr/bin/sed' 1d < 'tmp.nfReqHV7/02.response.raw' 1>'tmp.nfReqHV7/04.content.txt' 2>/dev/null
+# '/usr/bin/file' --brief --mime-type --mime-encoding 'tmp.nfReqHV7/04.content.txt' 2>/dev/null
+# '/bin/rm' -r 'tmp.nfReqHV7' 2>/dev/null
 txt.textprotocol.org - - [2021-07-09T11:05:42Z] "text://txt.textprotocol.org/" 20 262
 ```
 
