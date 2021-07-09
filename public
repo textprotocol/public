@@ -12,9 +12,11 @@
 local arg = arg
 local assert = assert
 local io = require( 'io' )
+local ipairs = ipairs
 local math = require( 'math' )
 local os = require( 'os' )
 local pcall = pcall
+local print = print
 local string = require( 'string' )
 local table = require( 'table' )
 local tonumber = tonumber
@@ -48,7 +50,7 @@ local function URL()
     assert( 'text://' == _url:sub( 1, 7 ) )
 
     _host = assert( _url:match( '^text://([%w.-]+)' ) )
-    _port = assert( tonumber( _url:match( ':([%d]+)/' ) ) or 1961 )
+    _port = tonumber( _url:match( ':([%d]+)/' ) )
 
     _name, _extension = _url:match( '/([%w-]+)%.(%w+)$' )
 
@@ -328,21 +330,159 @@ local function CHUNK( aHandle )
   return function() return aHandle:read( 4096 ) end
 end
 
+local function TCPCONNECTION( aMultiAddr )
+  if not aMultiAddr.text:find( '/tcp/%d+$' ) then return end
+  if not WHICH( 'nc' ) then return end
+  local aConnection =
+        ( '%s %s %i' ):format
+        (
+          assert( WHICH( 'nc' ) ),
+          QUOTE( aMultiAddr.address ),
+          aMultiAddr.port
+        )
+
+  return aConnection
+end
+
+local function TLSCONNECTION( aMultiAddr )
+  if not aMultiAddr.text:find( '/tcp/%d+/tls$' ) then return end
+  if not WHICH( 'openssl' ) then return end
+  local aConnection =
+        ( '%s s_client -quiet -connect %s' ):format
+        (
+          assert( WHICH( 'openssl' ) ),
+          QUOTE( ( '%s:%i' ):format( aMultiAddr.address, aMultiAddr.port ) )
+        )
+
+  return aConnection
+end
+
+local function NOISECONNECTION( aMultiAddr )
+  if not aMultiAddr.text:find( '/tcp/%d+/noise$' ) then return end
+  if not WHICH( 'noisecat' ) then return end
+  local aConnection =
+        ( '%s -v -proto Noise_XX_25519_ChaChaPoly_BLAKE2b %s %i' ):format
+        (
+          assert( WHICH( 'noisecat' ) ),
+          QUOTE( aMultiAddr.address ),
+          aMultiAddr.port
+        )
+
+  return aConnection
+end
+
+local _connectors = { NOISECONNECTION, TLSCONNECTION, TCPCONNECTION }
+
+local function CONNECTION( aMultiAddr )
+  for _, aConnector in ipairs( _connectors ) do
+    local aConnection = aConnector( aMultiAddr )
+
+    if aConnection then return aConnection end
+  end
+end
+
+local function MULTIADDRBUILD( aText )
+  if '/ip4/' ~= aText:sub( 1, 5 ) then return end
+  local anAddress = aText:match( '^/ip4/(.-)/' )
+  local aPort = tonumber( aText:match( '/tcp/(%d+)' ) )
+  local aPriority = 0
+        aText = aText:gsub( ';(%d+)$', function( aValue ) aPriority = tonumber( aValue ) return '' end )
+
+  return { address = anAddress, port = aPort, priority = aPriority, text = aText }
+end
+
+local function MULTIADDRLOOKUP( aHost )
+  if not WHICH( 'dig' ) then return end
+  local aCommand =
+        ( '%s +nocomments +nofail +ignore +short +retry=0 +notcp +time=1 +tries=1 $(%s %s) TXT 2>/dev/null' ):format
+        (
+          assert( WHICH( 'dig' ) ),
+          assert( WHICH( 'idn2' ) or WHICH( 'printf' ) ),
+          QUOTE( ( '_text._tcp.%s' ):format( aHost ) )
+        )
+        LOGCMD( aCommand )
+  local aHandle = io.popen( aCommand, 'r' )
+  local aList = {}
+
+  for aLine in aHandle:lines() do
+    local aText = aLine:match( '^"(.+)"$' )
+    local aMultiAddr = MULTIADDRBUILD( aText )
+
+    if aMultiAddr then
+      aList[ #aList + 1 ] = aMultiAddr
+      aList[ -aMultiAddr.port ] = aMultiAddr
+    end
+  end
+
+  table.sort( aList, function( aValue, anotherValue ) return aValue.priority < anotherValue.priority end )
+
+  aHandle:close()
+
+  return aList
+end
+
+local function MULTIADDRDISCOVER( aHost, aPort )
+  local aList = MULTIADDRLOOKUP( aHost )
+
+  if 0 == #aList then return end
+
+  if aList[ -( aPort or 0 ) ] then table.insert( aList, 1, aList[ -( aPort or 0 ) ] ) elseif aPort then assert( false ) end
+
+  for _, aMultiAddr in ipairs( aList ) do
+    aMultiAddr.connection = CONNECTION( aMultiAddr )
+
+    if aMultiAddr.connection then return aMultiAddr end
+  end
+end
+
+local _ports =
+{
+  [ 1961 ] = '/ip4/{ip4}/tcp/{port}',
+  [ 1965 ] = '/ip4/{ip4}/tcp/{port}/tls',
+  [ 1968 ] = '/ip4/{ip4}/tcp/{port}/noise'
+}
+
+local function MULTIADDRDEFAULT( aHost, aPort )
+  local anAddress = ADDRESS( aHost ) or aHost
+  local aPort = aPort or 1961
+  local aText = _ports[ aPort ]
+  local aMultiAddr = {}
+
+  if not aText then aText = _ports[ 1 ] end
+  aText = aText:gsub( '{ip4}', anAddress )
+  aText = aText:gsub( '{port}', aPort )
+
+  aMultiAddr.address = anAddress
+  aMultiAddr.port = aPort
+  aMultiAddr.text = aText
+  aMultiAddr.connection = CONNECTION( aMultiAddr )
+
+  return aMultiAddr
+end
+
+local function MULTIADDR( aHost, aPort )
+  local aMultiAddress = MULTIADDRDISCOVER( aHost, aPort ) or MULTIADDRDEFAULT( aHost, aPort )
+
+  _address = assert( aMultiAddress.address )
+  assert( aMultiAddress.text )
+  assert( aMultiAddress.connection )
+
+  return aMultiAddress
+end
+
 local function REQUEST()
   local aURL, aHost, aPort = URL()
-        INFO( ( '/dns/%s/tcp/%i' ):format( aHost, aPort ):upper() )
-        _address = ADDRESS( aHost )
-        if _address then INFO( ( '/ip/%s/tcp/%i' ):format( _address, aPort ):upper() ) end
-        LOCATION( _address )
-        PING( _address or aHost )
+        INFO( ( '/dns/%s' ):format( aHost ):upper() )
+  local aMultiAddr = MULTIADDR( aHost, aPort )
+        INFO( aMultiAddr.text:upper() )
+        LOCATION( aMultiAddr.address )
+        PING( aMultiAddr.address )
   local aResultName = MKFIFO( TMPNAME( 'result', 'fifo' ) )
   local aCommand =
-        ( '%s 5 %s -w 5 %s %i 1>%s 2>/dev/null' ):format
+        ( '%s 0.5 %s 1>%s 2>/dev/null' ):format
         (
           assert( WHICH( 'timeout' ) ),
-          assert( WHICH( 'nc' ) ),
-          QUOTE( _address or aHost ),
-          aPort,
+          aMultiAddr.connection,
           QUOTE( aResultName )
         )
         LOGCMD( aCommand )
@@ -362,7 +502,7 @@ local function REQUEST()
 
   assert( aFile:close() )
   assert( aResultHandle:close() )
-  assert( aHandle:close() )
+  aHandle:close()
 
   return aName
 end
