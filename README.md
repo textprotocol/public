@@ -190,6 +190,8 @@ __DEPENDENCIES__
 [ℹ︎](https://linux.die.net/man/1/mktemp "mktemp(1) - man page")`mktemp`\
 [ℹ︎](https://github.com/maxmind/mmdbinspect "maxmind geoip")`mmdbinspect` _optional_\
 [ℹ︎](https://linux.die.net/man/1/nc "nc(1) - man page")`nc`\
+[ℹ︎](https://github.com/gedigi/noisecat "noisecat")`noisecat` _optional_\
+[ℹ︎](https://linux.die.net/man/1/openssl "openssl(1) - man page")`openssl` _optional_\
 [ℹ︎](https://linux.die.net/man/1/pdftotext "pdftotext(1) - man page")`pdftotext` _optional_\
 [ℹ︎](https://linux.die.net/man/8/ping "ping(8) - man page")`ping` _optional_\
 [ℹ︎](https://linux.die.net/man/1/rm "rm(1) - man page")`rm`\
